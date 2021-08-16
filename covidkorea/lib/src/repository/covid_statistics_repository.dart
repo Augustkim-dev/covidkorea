@@ -17,17 +17,28 @@ class CovidStatisticsRepository {
     );
   }
 
-  Future<Covid19StatisticsModel> fetchCovidStatistics() async {
-    var response = await _dio.get('/openapi/service/rest/Covid19/getCovid19InfStateJson');
+  Future<List<Covid19StatisticsModel>> fetchCovidStatistics(
+      {String? startDate, String? endDate}) async {
+    var query = Map<String, String>();
+    if (startDate != null) query.putIfAbsent('startCreateDt', () => startDate);
+    if (endDate != null) query.putIfAbsent('endCreateDt', () => endDate);
+
+    var response = await _dio.get(
+      '/openapi/service/rest/Covid19/getCovid19InfStateJson',
+      queryParameters: query,
+    );
 
     final document = XmlDocument.parse(response.data);
     final results = document.findAllElements('item');
 
-    if(results.isNotEmpty) {
-      return Covid19StatisticsModel.fromXml(results.first);
+    if (results.isNotEmpty) {
+      return results
+          .map<Covid19StatisticsModel>((e) => Covid19StatisticsModel.fromXml(e))
+          .toList();
+
+      // return Covid19StatisticsModel.fromXml(results.first);
     } else {
       return Future.value(null);
     }
   }
-
 }
